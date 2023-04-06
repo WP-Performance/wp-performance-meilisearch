@@ -1,18 +1,17 @@
 <?php
 
-namespace WPPerfomance\Search\Inc;
+namespace WPPerformance\Search\Inc;
 
+use Exception;
 use Meilisearch\Client;
 
-
 // singleton class
-class SearchClient
+class Search_Client
 {
-    private static $instance = null;
-
     public static $app_url = null;
 
     public static $app_key = null;
+    private static $instance = null;
 
     private function __construct()
     {
@@ -22,7 +21,7 @@ class SearchClient
     {
         if (self::$instance == null) {
             if (!self::$app_url || !self::$app_key) {
-                throw new \Exception('PHP constant MEILISEARCH_APP_ID and MEILISEARCH_KEY_PUBLIC are not set in wp-config.php file');
+                throw new Exception('PHP constant MEILISEARCH_APP_ID and MEILISEARCH_KEY_PUBLIC are not set in wp-config.php file');
             }
             self::$instance = new Client(self::$app_url, self::$app_key);
         }

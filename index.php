@@ -1,24 +1,19 @@
 <?php
 
-namespace WPPerfomance\Search;
+namespace WPPerformance\Search;
 
 require_once __DIR__ . '/vendor/autoload.php';
 require_once __DIR__ . '/src/SearchClient.php';
 require_once __DIR__ . '/src/wp-cli.php';
 
-use WPPerfomance\Search\Inc\SearchClient;
+use WPPerformance\Search\Inc\Search_Client;
 
 /**
  * Plugin Name:     WP Performance Search Meilisearch
  * Description:     Add Meilisearch Search feature
  * Text Domain:     wp-performance-meilisearch
  * Version:         1.0.0
- *
- * @package         WP_Performance_Meilisearch
  */
-
-
-
 if (!defined('WP_ENV')) {
     define('WP_ENV', 'development');
 }
@@ -52,15 +47,15 @@ add_action(
     'wp_footer',
     function () {
         echo '<script type="text/javascript">'
+            . 'var MEILISEARCH_URL = "' . MEILISEARCH_URL . '";'
             . 'var MEILISEARCH_KEY_PUBLIC = "' . MEILISEARCH_KEY_PUBLIC . '";'
             . 'var MEILISEARCH_APP_INDEX = "' . namespace\wp_perf_search_index_name() . '";'
             . '</script>';
     }
 );
 
-
 // init keys for search
-SearchClient::initKeys(MEILISEARCH_URL, MEILISEARCH_KEY_SECRET);
+Search_Client::initKeys(MEILISEARCH_URL, MEILISEARCH_KEY_SECRET);
 
 /**
  * map data
@@ -93,20 +88,17 @@ function wp_perf_post_to_record($post)
     ];
 }
 
-
 /** same for all but you can change by post type */
 // add_filter('post_to_record', __NAMESPACE__ . '\wp_perf_post_to_record');
 // add_filter('snippet_to_record', __NAMESPACE__ . '\wp_perf_post_to_record');
 // add_filter('page_to_record', __NAMESPACE__ . '\wp_perf_post_to_record');
-
-
 
 /**
  * hook meta update
  */
 function wp_perf_update_post_meta($meta_id, $object_id, $meta_key, $_meta_value)
 {
-    $search = SearchClient::getInstance();
+    $search = Search_Client::getInstance();
 
     if (in_array($meta_key, namespace\getMetaKeys())) {
         $index = $search->index(
@@ -114,15 +106,13 @@ function wp_perf_update_post_meta($meta_id, $object_id, $meta_key, $_meta_value)
         );
 
         $index->updateDocuments([
-            'id' =>  $object_id,
+            'id' => $object_id,
             $meta_key => $_meta_value,
         ]);
     }
 }
 
 add_action('update_post_meta', __NAMESPACE__ . '\wp_perf_update_post_meta', 10, 4);
-
-
 
 /**
  * hook post update or create
@@ -137,7 +127,7 @@ function wp_perf_update_post($id, \WP_Post $post, $update)
         return $post;
     }
 
-    $search = SearchClient::getInstance();
+    $search = Search_Client::getInstance();
 
     $record = (array) wp_perf_post_to_record($post);
 
@@ -148,7 +138,6 @@ function wp_perf_update_post($id, \WP_Post $post, $update)
     $index = $search->index(
         namespace\wp_perf_search_index_name()
     );
-
 
     if ('trash' == $post->post_status) {
         $index->deleteDocument($record['id']);
